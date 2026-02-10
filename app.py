@@ -244,7 +244,7 @@ def processar(df_origem, mapa):
         
         status.update(label="Concluído!", state="complete", expanded=False)
 
-    st.markdown("### Visualização (1000 primeiras linhas)")
+    st.markdown("### Visualização (1000 linhas)")
     st.dataframe(df_final.head(1000))
     
     buffer = io.BytesIO()
