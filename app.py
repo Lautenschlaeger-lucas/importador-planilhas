@@ -143,7 +143,7 @@ def converter_origem_artemis(valor):
             if num in DE_PARA_ARTEMIS:
                 return DE_PARA_ARTEMIS[num]
             
-            # Se já for código Artemis (11 a 18 ou 1227), mantém
+            # Se já for código Artemis (11 a 18 ou 1227), mant
             if num in DE_PARA_ARTEMIS.values():
                 return num
     except:
