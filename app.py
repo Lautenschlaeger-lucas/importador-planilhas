@@ -106,25 +106,69 @@ def definir_unidade_fracao(codigo_unidade):
     except:
         return 0
 
+# A chave é o Código Brasil (0, 1, 2...)
+# O valor é o Código Artemis (11, 12, 13...)
+DE_PARA_ARTEMIS = {
+    0: 11,   # Nacional
+    1: 12,   # Estrangeira (Importação Direta)
+    2: 13,   # Estrangeira (Mercado Interno)
+    3: 14,   # Nacional (> 40% Conteúdo Estrangeiro)
+    4: 15,   # Nacional (Processos Produtivos Básicos)
+    5: 16,   # Nacional (< 40% Conteúdo Estrangeiro)
+    6: 17,   # Estrangeira (Imp. Direta - Sem Similar)
+    7: 18,   # Estrangeira (Merc. Interno - Sem Similar)
+    8: 1227  # Nacional (Conteúdo Importação > 70%)
+}
+
 def converter_origem_artemis(valor):
-    if pd.isna(valor): return 10 
+    """
+    Entrada: Código Padrão (0, 1, 2) ou Descrição (Nacional...)
+    Saída: Código Artemis (11, 12, 13...)
+    """
+    # Se estiver vazio, retorna padrão (10 = Outros ou 11 = Nacional, você escolhe)
+    if pd.isna(valor) or str(valor).strip() == "": 
+        return 10 # Assumindo Nacional como padrão se vazio
+    
     val_str = str(valor).strip().upper()
+
+    # TENTATIVA POR NÚMERO (Prioridade Máxima)
     try:
-        num = int(float(valor))
-        if num in DE_PARA_ARTEMIS: return DE_PARA_ARTEMIS[num]
-        if num in DE_PARA_ARTEMIS.values() or num == 10: return num
+        # Pega apenas o primeiro número se tiver texto junto (ex: "0 - Nacional" vira 0)
+        # Regex busca o primeiro dígito que encontrar
+        match_numero = re.search(r'\d+', val_str)
+        if match_numero:
+            num = int(match_numero.group())
+            
+            # Se for código Brasil (0 a 8), converte para Artemis
+            if num in DE_PARA_ARTEMIS:
+                return DE_PARA_ARTEMIS[num]
+            
+            # Se já for código Artemis (11 a 18 ou 1227), mantém
+            if num in DE_PARA_ARTEMIS.values():
+                return num
     except:
         pass
+    
     if "NACIONAL" in val_str:
-        if "MAIS DE 40" in val_str: return 14
-        if "MENOS DE 40" in val_str: return 16
-        if "BASICOS" in val_str or "BÁSICOS" in val_str: return 15
-        return 11
-    if "ESTRANGEIRA" in val_str or "IMPORTAD" in val_str:
-        if "SEM SIMILAR" in val_str: return 17 if "DIRETA" in val_str else 18
-        if "DIRETA" in val_str: return 12
-        if "INTERNO" in val_str: return 13
-        return 12 
+        if "MAIS DE 40" in val_str or "SUPERIOR A 40" in val_str: return 14  # Cód 3
+        if "MENOS DE 40" in val_str or "INFERIOR A 40" in val_str: return 16 # Cód 5
+        if "BASICOS" in val_str or "BÁSICOS" in val_str or "PPB" in val_str: return 15 # Cód 4
+        if "70%" in val_str or "SUPERIOR A 70" in val_str: return 1227 # Cód 8
+        return 11 # Cód 0 (Padrão Nacional)
+
+    if "ESTRANGEIRA" in val_str or "IMPORTADO" in val_str:
+        # Verifica se é "Sem Similar Nacional" (Códigos 6 e 7)
+        sem_similar = ("SEM SIMILAR" in val_str or "SEM PRODUTO NACIONAL" in val_str)
+        
+        if "DIRETA" in val_str:
+            return 17 if sem_similar else 12 # Cód 6 ou 1
+        
+        if "INTERNO" in val_str or "ADQUIRIDA" in val_str:
+            return 18 if sem_similar else 13 # Cód 7 ou 2
+            
+        return 12 # Default para Importado (Importação Direta)
+    
+    # Se não entendeu Outros (10)
     return 10
 
 
