@@ -141,17 +141,17 @@ def converter_origem_artemis(valor):
 # ==========================================
 
 def main():
-    st.title("Normalizador Magis5 - Padrão ARTEMIS")
-    st.markdown("Validação de Planilhas com regras fiscais e formatação BR Inteligente.")
+    st.title("Normalizador Magis5")
+    st.markdown("Validação de Planilhas implantação")
     
     col_up, col_info = st.columns([2, 1])
     
     with col_info:
-        st.info("ℹ️ **Regras Ativas**")
-        st.write("✅  **Decimal:** Vírgula (ex: 10,50)")
+        st.info("**Regras Ativas**")
+        st.write("✅ **Decimal:** Vírgula (ex: 10,50)")
         st.write("✅ **Vazios:** Campos opcionais ficam em branco")
         st.write("✅ **Unidade:** Automática (KG=1, UN=0)")
-        st.write("✅ **Origem:** Formatado com nosso gabarito 11-18 ou 1227 ou 10 se não identificado")
+        st.write("✅ **Origem:** Formatado com nosso gabarito 11 ao 18 e 1227 ou 10 se não identificado")
 
     with col_up:
         uploaded_file = st.file_uploader("📂 Carregue a planilha (.xlsx ou .csv)", type=['xlsx', 'csv'])
@@ -226,26 +226,26 @@ def processar(df_origem, mapa):
         else:
              df_final['Unidade/Fração'] = 0
 
-        # 5. VALORES (LÓGICA AJUSTADA AQUI)
+        # 5. VALORES (LÓGICA AJUSTADA AQUI não mexer mais)
         colunas_numericas = ['Custo', 'Venda', 'Peso Liquido', 'Peso Bruto', 'Altura', 'Largura', 'Profundidade']
         
         st.write("Formatando valores e respeitando campos vazios...")
         for col in colunas_numericas:
             if col in df_final.columns:
-                # 1. Converte para Float ou None (sem forçar zero ainda)
+                # Converte para Float ou None
                 df_final[col] = df_final[col].apply(limpar_dinheiro)
 
-                # 2. SÓ preenche com 0.0 se for OBRIGATÓRIA e estiver vazia
+                # SÓ preenche com 0.0 se for OBRIGATÓRIA e estiver vazia
                 if col in OBRIGATORIAS:
                      df_final[col] = df_final[col].fillna(0.0)
-                
-                # 3. Formata (None vira "", Float vira "10,50")
+
+                # Formata (None vira "", Float vira "10,50")
                 df_final[col] = df_final[col].apply(formatar_brasileiro)
         
         status.update(label="Concluído!", state="complete", expanded=False)
 
-    st.markdown("### Visualização (50 primeiras linhas)")
-    st.dataframe(df_final.head(50))
+    st.markdown("### Visualização (1000 primeiras linhas)")
+    st.dataframe(df_final.head(1000))
     
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
