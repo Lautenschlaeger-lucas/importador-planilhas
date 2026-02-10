@@ -148,7 +148,7 @@ def main():
     
     with col_info:
         st.info("ℹ️ **Regras Ativas**")
-        st.write("✅ **Decimal:** Vírgula (ex: 10,50)")
+        st.write("✅  **Decimal:** Vírgula (ex: 10,50)")
         st.write("✅ **Vazios:** Campos opcionais ficam em branco")
         st.write("✅ **Unidade:** Automática (KG=1, UN=0)")
 
@@ -171,7 +171,7 @@ def main():
             st.markdown("---")
             
             with st.form("form_map"):
-                st.subheader("🔗 Mapeamento de Colunas")
+                st.subheader("Mapeamento de Colunas")
                 cols = st.columns(3)
                 mapa = {}
                 opcoes = ["(Vazio)"] + list(df_cliente.columns)
@@ -188,7 +188,7 @@ def main():
                         mapa[col_sis] = sel
                 
                 st.markdown("<br>", unsafe_allow_html=True)
-                submit = st.form_submit_button("⚙️ PROCESSAR DADOS", type="primary")
+                submit = st.form_submit_button("PROCESSAR DADOS", type="primary")
 
             if submit:
                 processar(df_cliente, mapa)
@@ -243,8 +243,8 @@ def processar(df_origem, mapa):
         
         status.update(label="Concluído!", state="complete", expanded=False)
 
-    st.markdown("### ✅ Visualização (10 primeiras linhas)")
-    st.dataframe(df_final.head(10))
+    st.markdown("### ✅ Visualização (50 primeiras linhas)")
+    st.dataframe(df_final.head(50))
     
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
