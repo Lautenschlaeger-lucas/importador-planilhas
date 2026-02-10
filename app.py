@@ -35,9 +35,9 @@ COLUNAS_SISTEMA = [
 ]
 
 OBRIGATORIAS = [
-    "SKU Externo", "Código de Barras", "Descrição", "NCM", 
+    "SKU Externo", "Descrição", "NCM", 
     "Un Comercial", "Origem do Produto", "Unidade/Fração", 
-    "Regra Padrão", "Peso Liquido", "Peso Bruto"
+    "Regra Padrão"
 ]
 
 MAPA_UNIDADES = {
