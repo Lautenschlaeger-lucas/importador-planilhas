@@ -286,7 +286,7 @@ def processar(df_origem, mapa):
 
     # --- RESULTADO ---
     st.markdown(f"### ✅ Resultado Final ({len(df_final)} produtos)")
-    st.dataframe(df_final.head())
+    st.dataframe(df_final)
     
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
