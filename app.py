@@ -232,48 +232,61 @@ def main():
 def processar(df_origem, mapa):
     df_final = pd.DataFrame(columns=COLUNAS_SISTEMA)
     
+    # 1. Copia os dados
     for col_sis, col_cli in mapa.items():
         df_final[col_sis] = df_origem[col_cli]
     
-    with st.status("Aplicando validações...", expanded=True) as status:
+    with st.status("Processando...", expanded=True) as status:
         
+        # --- LIMPEZA DE SKU ---
+        st.write("Verificando SKUs...")
+        df_final['SKU Externo'] = df_final['SKU Externo'].apply(limpar_sku)
+        
+        # Remove linhas sem SKU
+        df_final = df_final[df_final['SKU Externo'] != ""]
+
+        # --- OUTRAS VALIDAÇÕES ---
+        
+        # Origem (Usa a nova lógica de 0, 1 -> 11, 12)
         if 'Origem do Produto' in df_final.columns:
             df_final['Origem do Produto'] = df_final['Origem do Produto'].apply(converter_origem_artemis)
         else:
-            df_final['Origem do Produto'] = 11
+            df_final['Origem do Produto'] = 11 # Default Nacional
             
-        df_final['SKU Externo'] = df_final['SKU Externo'].apply(limpar_sku)
-        df_final = df_final[df_final['SKU Externo'] != ""]
-        
+        # NCM
         if 'NCM' in df_final.columns:
             df_final['NCM'] = df_final['NCM'].apply(limpar_ncm)
             
+        # Unidades
         if 'Un Comercial' in df_final.columns:
             df_final['Un Comercial'] = df_final['Un Comercial'].apply(converter_unidade)
             df_final['Unidade/Fração'] = df_final['Un Comercial'].apply(definir_unidade_fracao)
         else:
              df_final['Unidade/Fração'] = 0
 
-        # 5. VALORES (LÓGICA AJUSTADA AQUI não mexer mais)
+        # --- VALORES E PESOS (Ajuste Solicitado) ---
         colunas_numericas = ['Custo', 'Venda', 'Peso Liquido', 'Peso Bruto', 'Altura', 'Largura', 'Profundidade']
+        colunas_peso = ['Peso Liquido', 'Peso Bruto'] # Lista de quem TEM que ser zero se vazio
         
-        st.write("Formatando valores e respeitando campos vazios...")
         for col in colunas_numericas:
             if col in df_final.columns:
-                # Converte para Float ou None
+                # 1. Limpa (transforma em número Python)
                 df_final[col] = df_final[col].apply(limpar_dinheiro)
-
-                # SÓ preenche com 0.0 se for OBRIGATÓRIA e estiver vazia
-                if col in OBRIGATORIAS:
+                
+                # 2. REGRA DO PESO E OBRIGATÓRIOS:
+                # Se for Peso OU estiver na lista de Obrigatórios -> Preenche com 0.0 se estiver vazio
+                if col in colunas_peso:
                      df_final[col] = df_final[col].fillna(0.0)
-
-                # Formata (None vira "", Float vira "10,50")
+                
+                # 3. Formata para Brasil (Vírgula)
+                # Se for vazio (None), fica vazio "". Se for 0.0, fica "0,00".
                 df_final[col] = df_final[col].apply(formatar_brasileiro)
         
         status.update(label="Concluído!", state="complete", expanded=False)
 
-    st.markdown("### Visualização (1000 linhas)")
-    st.dataframe(df_final.head(1000))
+    # --- RESULTADO ---
+    st.markdown(f"### ✅ Resultado Final ({len(df_final)} produtos)")
+    st.dataframe(df_final.head(10))
     
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
