@@ -3,9 +3,6 @@ import pandas as pd
 import io
 import re
 
-# ==========================================
-# CONFIGURAÇÕES DA PÁGINA
-# ==========================================
 st.set_page_config(
     page_title="Importador Oficial Magis5 (ARTEMIS)",
     page_icon="📦",
@@ -28,9 +25,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# DEFINIÇÃO DE COLUNAS E DADOS
-# ==========================================
 
 COLUNAS_SISTEMA = [
     "SKU Externo", "Código de Barras", "Descrição", "Marca", "Categoria", 
@@ -59,9 +53,6 @@ DE_PARA_ARTEMIS = {
     3: 14, 4: 15, 5: 16, 6: 17, 7: 18, 8: 1227
 }
 
-# ==========================================
-# FUNÇÕES DE LIMPEZA
-# ==========================================
 
 def limpar_sku(valor):
     if pd.isna(valor): return ""
@@ -136,9 +127,6 @@ def converter_origem_artemis(valor):
         return 12 
     return 10
 
-# ==========================================
-# APP PRINCIPAL
-# ==========================================
 
 def main():
     st.title("Normalizador Magis5")
@@ -205,21 +193,17 @@ def processar(df_origem, mapa):
     
     with st.status("Aplicando validações...", expanded=True) as status:
         
-        # 1. ORIGEM
         if 'Origem do Produto' in df_final.columns:
             df_final['Origem do Produto'] = df_final['Origem do Produto'].apply(converter_origem_artemis)
         else:
             df_final['Origem do Produto'] = 11
             
-        # 2. SKU
         df_final['SKU Externo'] = df_final['SKU Externo'].apply(limpar_sku)
         df_final = df_final[df_final['SKU Externo'] != ""]
         
-        # 3. NCM
         if 'NCM' in df_final.columns:
             df_final['NCM'] = df_final['NCM'].apply(limpar_ncm)
             
-        # 4. UNIDADES
         if 'Un Comercial' in df_final.columns:
             df_final['Un Comercial'] = df_final['Un Comercial'].apply(converter_unidade)
             df_final['Unidade/Fração'] = df_final['Un Comercial'].apply(definir_unidade_fracao)
