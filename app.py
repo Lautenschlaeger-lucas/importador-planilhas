@@ -141,7 +141,7 @@ def converter_origem_artemis(valor):
 # ==========================================
 
 def main():
-    st.title("🚀 Normalizador Magis5 - Padrão ARTEMIS")
+    st.title("Normalizador Magis5 - Padrão ARTEMIS")
     st.markdown("Validação de Planilhas com regras fiscais e formatação BR Inteligente.")
     
     col_up, col_info = st.columns([2, 1])
