@@ -151,6 +151,7 @@ def main():
         st.write("✅  **Decimal:** Vírgula (ex: 10,50)")
         st.write("✅ **Vazios:** Campos opcionais ficam em branco")
         st.write("✅ **Unidade:** Automática (KG=1, UN=0)")
+        st.write("✅ **Origem:** Formatado com nosso gabarito 11-18 ou 1227 ou 10 se não identificado")
 
     with col_up:
         uploaded_file = st.file_uploader("📂 Carregue a planilha (.xlsx ou .csv)", type=['xlsx', 'csv'])
@@ -243,7 +244,7 @@ def processar(df_origem, mapa):
         
         status.update(label="Concluído!", state="complete", expanded=False)
 
-    st.markdown("### ✅ Visualização (50 primeiras linhas)")
+    st.markdown("### Visualização (50 primeiras linhas)")
     st.dataframe(df_final.head(50))
     
     buffer = io.BytesIO()
