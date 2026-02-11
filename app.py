@@ -241,17 +241,19 @@ def processar(df_origem, mapa):
         # --- LIMPEZA DE SKU ---
         st.write("Verificando SKUs...")
         df_final['SKU Externo'] = df_final['SKU Externo'].apply(limpar_sku)
-        
-        # Remove linhas sem SKU
         df_final = df_final[df_final['SKU Externo'] != ""]
 
+        # --- CORREÇÃO DO EAN (CÓDIGO DE BARRAS) ---
+        st.write("Corrigindo EANs/Códigos de Barras...")
+        if 'Código de Barras' in df_final.columns:
+            df_final['Código de Barras'] = df_final['Código de Barras'].apply(limpar_ean)
+
         # --- OUTRAS VALIDAÇÕES ---
-        
-        # Origem (Usa a nova lógica de 0, 1 -> 11, 12)
+        # Origem
         if 'Origem do Produto' in df_final.columns:
             df_final['Origem do Produto'] = df_final['Origem do Produto'].apply(converter_origem_artemis)
         else:
-            df_final['Origem do Produto'] = 11 # Default Nacional
+            df_final['Origem do Produto'] = 11 
             
         # NCM
         if 'NCM' in df_final.columns:
@@ -264,36 +266,46 @@ def processar(df_origem, mapa):
         else:
              df_final['Unidade/Fração'] = 0
 
-        # --- VALORES E PESOS (Ajuste Solicitado) ---
+        # Valores e Pesos
         colunas_numericas = ['Custo', 'Venda', 'Peso Liquido', 'Peso Bruto', 'Altura', 'Largura', 'Profundidade']
-        colunas_peso = ['Peso Liquido', 'Peso Bruto'] # Lista de quem TEM que ser zero se vazio
+        colunas_peso = ['Peso Liquido', 'Peso Bruto']
         
         for col in colunas_numericas:
             if col in df_final.columns:
-                # 1. Limpa (transforma em número Python)
                 df_final[col] = df_final[col].apply(limpar_dinheiro)
-                
-                # 2. REGRA DO PESO E OBRIGATÓRIOS:
-                # Se for Peso OU estiver na lista de Obrigatórios -> Preenche com 0.0 se estiver vazio
-                if col in colunas_peso:
+                if col in colunas_peso or col in OBRIGATORIAS:
                      df_final[col] = df_final[col].fillna(0.0)
-                
-                # 3. Formata para Brasil (Vírgula)
-                # Se for vazio (None), fica vazio "". Se for 0.0, fica "0,00".
                 df_final[col] = df_final[col].apply(formatar_brasileiro)
         
         status.update(label="Concluído!", state="complete", expanded=False)
 
-    # --- RESULTADO ---
+    # --- RESULTADO E DOWNLOAD ---
     st.markdown(f"### ✅ Resultado Final ({len(df_final)} produtos)")
-    st.dataframe(df_final)
+    st.dataframe(df_final.head(10))
     
     buffer = io.BytesIO()
+    
+    # Configuração avançada do Excel para travar o formato TEXTO
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
         df_final.to_excel(writer, index=False, sheet_name='Importacao')
-        ws = writer.sheets['Importacao']
+        
+        workbook  = writer.book
+        worksheet = writer.sheets['Importacao']
+        
+        # Cria um formato de TEXTO puro para o Excel
+        formato_texto = workbook.add_format({'num_format': '@'})
+        
+        # Aplica esse formato na coluna de Código de Barras (se ela existir)
+        if 'Código de Barras' in df_final.columns:
+            # Pega o índice da coluna (onde ela está, 0, 1, 2...?)
+            idx_ean = df_final.columns.get_loc('Código de Barras')
+            # Aplica o formato na coluna inteira (largura 25)
+            worksheet.set_column(idx_ean, idx_ean, 25, formato_texto)
+            
+        # Aplica largura padrão nas outras
         for i, col in enumerate(df_final.columns):
-            ws.set_column(i, i, 18)
+            if col != 'Código de Barras':
+                worksheet.set_column(i, i, 18)
             
     st.download_button(
         label="⬇️ BAIXAR PLANILHA FINAL",
