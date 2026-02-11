@@ -78,6 +78,25 @@ def limpar_dinheiro(valor):
     except:
         return None
 
+def limpar_ean(valor):
+    """
+    Converte 7.90E+12 para '7900000000000'
+    Remove pontos e garante formato texto.
+    """
+    if pd.isna(valor) or str(valor).strip() == "": return ""
+    
+    # Converte para string primeiro
+    s_val = str(valor).strip()
+    
+    try:
+        # Se for notação científica (tem 'E' ou ponto), converte float -> int -> str
+        # Isso recupera o número original
+        f_val = float(s_val)
+        return str(int(f_val))
+    except:
+        # Se não der, retorna o texto limpo de caracteres estranhos
+        return re.sub(r'[^0-9]', '', s_val)
+
 def formatar_brasileiro(valor):
     """
     Se for None -> Retorna "" (Vazio)
