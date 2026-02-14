@@ -300,7 +300,7 @@ def processar(df_origem, mapa):
 
     # --- RESULTADO E DOWNLOAD ---
     st.markdown(f"### ✅ Resultado Final ({len(df_final)} produtos)")
-    st.dataframe(df_final.head(10))
+    st.dataframe(df_final.head(df_final))
     
     buffer = io.BytesIO()
     
